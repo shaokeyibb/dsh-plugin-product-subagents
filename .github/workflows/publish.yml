@@ -1,0 +1,42 @@
+name: Publish to npm
+
+# npm trusted publishing (OIDC) — no NODE_AUTH_TOKEN needed. Requires the
+# package's npm settings to trust this GitHub Actions workflow once:
+#   npmjs.com → package → Settings → Trusted publishers → Add:
+#     Provider: GitHub Actions
+#     GitHub owner: shaokeyibb
+#     Repository: dsh-plugin-product-subagents
+#     Workflow filename: publish.yml
+#     Allowed action: npm publish
+# See https://docs.npmjs.com/trusted-publishers/
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish_ref:
+        description: 'Tag or ref to publish (default: the workflow ref)'
+        required: false
+
+permissions:
+  contents: read
+  id-token: write # OIDC identity for npm trusted publishing + provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.publish_ref || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm test
+      - run: npm publish --provenance --access public
+        env:
+          # Do NOT add NODE_AUTH_TOKEN: trusted publishing authenticates via
+          # the OIDC token and generates provenance automatically.
+          NPM_CONFIG_PROVENANCE: 'true'

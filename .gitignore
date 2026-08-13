@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# harness / runtime state
+*.log
+.DS_Store
+
+# session / credential artifacts — never commit
+*.jsonl
+*.jsonl.zstd
+registry*.json
+
+# editor
+.vscode/
+.idea/

@@ -1,0 +1,46 @@
+{
+  "name": "dsh-plugin-product-subagents",
+  "version": "0.2.0",
+  "description": "Role-based Codex / Claude Code / ACP subagent providers for the DeepSeek Harness: continuable children, durable session recovery, per-role product permissions, delegation with a permission ceiling, and a declarative role library.",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib/",
+    "roles/",
+    "README.md",
+    "README.zh.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "lint": "node scripts/lint.js"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "cordis",
+    "subagent",
+    "claude-code",
+    "codex",
+    "acp",
+    "agent-client-protocol",
+    "opencode",
+    "agent"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shaokeyibb/dsh-plugin-product-subagents.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@agentclientprotocol/sdk": "^0.25.0",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "zod": "^3.23.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-subagent": "^0.1.0-rc.6",
+    "@deepseek-ai/cordis": "^4.0.1"
+  }
+}
