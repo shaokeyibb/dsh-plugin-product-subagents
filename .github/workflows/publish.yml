@@ -33,6 +33,10 @@ jobs:
         with:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
+      # npm trusted publishing (OIDC) requires npm CLI >= 11.5.1; Node 22's
+      # bundled npm is 10.x, which cannot perform the OIDC token exchange and
+      # fails with `404 'pkg@version' is not in this registry`.
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm test
       - run: npm publish --provenance --access public
