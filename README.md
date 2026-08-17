@@ -39,27 +39,50 @@ permission ceiling, and cross-platform process launching.
 
 ## Install
 
-### Install via your agent (one line)
-
-Paste this to your DeepSeek Harness agent (or any coding agent with shell and
-file access to the harness home) — it performs every step itself:
-
-> Install the `dsh-plugin-product-subagents` plugin into my DeepSeek Harness
-> web profile: run `npm i dsh-plugin-product-subagents` in
-> `~/.dsh/profiles/web`, then append this row to
-> `~/.dsh/profiles/web/cordis.patch.yml` —
-> `- insert: [{id: product-subagents, name: 'dsh-plugin-product-subagents', config: {idleTimeoutMs: 600000}}]` —
-> then tell me to restart the harness so the plugin loads.
-
-That one prompt covers: installing the package into the profile, wiring the
-host-plane row, and flagging the required restart. (Before the package is
-published, use the local variant: point the row's `name` at this repo's
-`lib/index.js` instead of the package name.)
-
-### Manual
+### Recommended — `dsh plugin add`
 
 ```bash
-npm i dsh-plugin-product-subagents
+dsh plugin --profile web add dsh-plugin-product-subagents
+```
+
+That single command installs the package **and** wires the host-plane row
+automatically: the plugin ships a `cordis.patch.yml` declared via
+`dsh.bundle` in its `package.json`, so `dsh plugin add` registers it as a
+profile layer (no manual `cordis.patch.yml` editing needed). Restart the
+harness afterwards so the plugin loads.
+
+To customise the plugin (e.g. add ACP providers), target the `product-subagents`
+id in your profile's own `cordis.patch.yml` (`~/.dsh/profiles/web/cordis.patch.yml`):
+
+```yaml
+- id: product-subagents
+  config:
+    idleTimeoutMs: 600000
+    providers:
+      cursor:    { type: acp, command: agent, args: [acp] }
+      codebuddy: { type: acp, command: cbc, args: [--acp] }
+```
+
+> **Note:** a config override replaces the row's whole `config` object, so
+> restate any keys you wish to keep (like `idleTimeoutMs` above).
+
+### Install via your agent (one line)
+
+Paste this to your DeepSeek Harness agent (or any coding agent with shell
+access to the harness home) — it performs every step itself:
+
+> Install the `dsh-plugin-product-subagents` plugin into my DeepSeek Harness
+> web profile: run `dsh plugin --profile web add dsh-plugin-product-subagents`,
+> then tell me to restart the harness so the plugin loads.
+
+### Manual (advanced)
+
+If you prefer to manage the profile yourself, use pnpm (not npm) inside the
+profile directory so peer dependencies are not auto-installed:
+
+```bash
+cd ~/.dsh/profiles/web
+pnpm add dsh-plugin-product-subagents
 ```
 
 Then add a host-plane row to your profile's `cordis.patch.yml`:

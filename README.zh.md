@@ -23,21 +23,52 @@
 
 ## 安装
 
-### 让 Agent 安装(一句话)
-
-把这句粘贴给你的 DeepSeek Harness Agent(或任何有 shell 与 harness 目录文件权限的编码 Agent),它会自己完成所有步骤:
-
-> 请把 `dsh-plugin-product-subagents` 插件装进我的 DeepSeek Harness web profile:在 `~/.dsh/profiles/web` 里执行 `npm i dsh-plugin-product-subagents`,然后在 `~/.dsh/profiles/web/cordis.patch.yml` 末尾追加一行 —— `- insert: [{id: product-subagents, name: 'dsh-plugin-product-subagents', config: {idleTimeoutMs: 600000}}]` —— 然后提醒我重启 harness 让插件生效。
-
-这一句覆盖:装包进 profile、接线宿主层行、提示所需重启。(包发布前用本地变体:把行的 `name` 指向本仓库的 `lib/index.js` 即可。)
-
-### 手动安装
+### 推荐方式 — `dsh plugin add`
 
 ```bash
-npm i dsh-plugin-product-subagents
+dsh plugin --profile web add dsh-plugin-product-subagents
 ```
 
-在 profile 的 `cordis.patch.yml` 加一行宿主层:
+这一条命令**同时**完成装包与接线:插件通过 `package.json` 里的 `dsh.bundle`
+声明自带 `cordis.patch.yml`,`dsh plugin add` 会自动将其注册为 profile 层
+(无需手动编辑 `cordis.patch.yml`)。装完后重启 harness 即可生效。
+
+如需自定义插件配置(例如加 ACP provider),在 profile 自己的
+`cordis.patch.yml`(`~/.dsh/profiles/web/cordis.patch.yml`)里按
+`product-subagents` id 覆盖:
+
+```yaml
+- id: product-subagents
+  config:
+    idleTimeoutMs: 600000
+    providers:
+      cursor:    { type: acp, command: agent, args: [acp] }
+      codebuddy: { type: acp, command: cbc, args: [--acp] }
+```
+
+> **注意:** config 覆盖会替换整行 `config` 对象,请把要保留的字段一并写上
+> (如上面的 `idleTimeoutMs`)。
+
+### 让 Agent 安装(一句话)
+
+把这句粘贴给你的 DeepSeek Harness Agent(或任何有 shell 权限的编码 Agent),
+它会自己完成所有步骤:
+
+> 请把 `dsh-plugin-product-subagents` 插件装进我的 DeepSeek Harness
+> web profile:执行 `dsh plugin --profile web add dsh-plugin-product-subagents`,
+> 然后提醒我重启 harness 让插件生效。
+
+### 手动安装(进阶)
+
+如果你希望自己管理 profile,请在 profile 目录内使用 pnpm(不要用 npm),
+以避免 peer 依赖被自动安装:
+
+```bash
+cd ~/.dsh/profiles/web
+pnpm add dsh-plugin-product-subagents
+```
+
+然后在 profile 的 `cordis.patch.yml` 加一行宿主层:
 
 ```yaml
 - insert:

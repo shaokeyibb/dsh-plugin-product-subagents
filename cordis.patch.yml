@@ -1,0 +1,17 @@
+# Bundle patch for dsh-plugin-product-subagents.
+#
+# Declared via `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }` in
+# package.json so that `dsh plugin --profile <name> add dsh-plugin-product-subagents`
+# automatically wires this plugin as a profile layer — no manual
+# cordis.patch.yml editing required.
+#
+# Applied as a bundle layer (before the user's own cordis.patch.yml). Users
+# override config by targeting the `product-subagents` id in their patch layer;
+# a config override replaces the whole `config` object, so restate any keys you
+# wish to keep.
+
+- insert:
+    - id: product-subagents
+      name: 'dsh-plugin-product-subagents'
+      config:
+        idleTimeoutMs: 600000
