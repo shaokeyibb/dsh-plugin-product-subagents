@@ -36,11 +36,11 @@
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "^0.25.0",
-    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
     "zod": "^3.23.0"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-subagent": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
     "@deepseek-ai/cordis": "^4.0.1"
   }
 }

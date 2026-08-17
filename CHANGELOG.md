@@ -14,6 +14,13 @@ Open-source release restructuring.
 - Bilingual README (EN + zh), CONTRIBUTING, SECURITY, ARCHITECTURE docs.
 - Split `lib/index.js` into `lib/tools/*` (one module per tool).
 
+### Fixed
+- Move `@deepseek-ai/dsh-tools` from `dependencies` to `peerDependencies`: the
+  harness core package must share a singleton with the host, and a second
+  pnpm-installed copy in the profile shadowed the symlink and crashed every
+  tool call with `Cannot read properties of undefined (reading 'prepare')`
+  (fixes #3).
+
 ## [0.1.0]
 
 ### Added
