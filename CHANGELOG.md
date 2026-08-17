@@ -2,7 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
-## [0.2.0] — unreleased
+## [0.3.0] — 2026-08-17
+
+### Fixed
+- Windows: `winArgs()` wraps the whole `cmd /S /C` invocation in one outer
+  pair of quotes, so `/S` strips exactly that pair instead of the command's
+  own quotes. `product_delegate` (claude-code / codex) no longer fails with
+  `'claude" -p ...' is not recognized` (fixes #1).
+- Move `@deepseek-ai/dsh-tools` from `dependencies` to `peerDependencies`: the
+  harness core package must share a singleton with the host, and a second
+  pnpm-installed copy in the profile shadowed the symlink and crashed every
+  tool call with `Cannot read properties of undefined (reading 'prepare')`
+  (fixes #3).
+
+## [0.2.0] — 2026-08-13
 
 Open-source release restructuring.
 
@@ -13,13 +26,6 @@ Open-source release restructuring.
 - Config validation (`zod`) for `providers`, roles, and plugin config.
 - Bilingual README (EN + zh), CONTRIBUTING, SECURITY, ARCHITECTURE docs.
 - Split `lib/index.js` into `lib/tools/*` (one module per tool).
-
-### Fixed
-- Move `@deepseek-ai/dsh-tools` from `dependencies` to `peerDependencies`: the
-  harness core package must share a singleton with the host, and a second
-  pnpm-installed copy in the profile shadowed the symlink and crashed every
-  tool call with `Cannot read properties of undefined (reading 'prepare')`
-  (fixes #3).
 
 ## [0.1.0]
 

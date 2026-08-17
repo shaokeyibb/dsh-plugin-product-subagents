@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-product-subagents",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Role-based Codex / Claude Code / ACP subagent providers for the DeepSeek Harness: continuable children, durable session recovery, per-role product permissions, delegation with a permission ceiling, and a declarative role library.",
   "type": "module",
   "main": "lib/index.js",
