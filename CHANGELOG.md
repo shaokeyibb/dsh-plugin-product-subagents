@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.3.2] — 2026-08-24
+
+### Fixed
+- `subagent_progress` and `product_wait` no longer fail with
+  `value is not lossless JSON` when polling an active `claude` product child.
+  Both tools built their result from optional fold fields (`mode`, `label`,
+  `turn`, `lastTask`, `trace`, `inFlight`, `stopReason`, ...) that are
+  legitimately `undefined` whenever a child has no local session snapshot — the
+  normal case for a `claude` child, whose events live in the remote CLI. The
+  harness validates every tool result as strict lossless JSON, so a single
+  `undefined` value threw on every poll, breaking watchable delegation. Results
+  are now passed through a shared `stripUndefined` helper (`lib/lossless.js`)
+  that recursively drops `undefined` keys/elements before returning.
+
 ## [0.3.1] — 2026-08-17
 
 ### Added
