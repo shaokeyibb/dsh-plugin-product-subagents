@@ -53,3 +53,19 @@ test('stripUndefined passes non-plain values through untouched', () => {
   assert.equal(stripUndefined(5), 5)
   assert.equal(stripUndefined(null), null)
 })
+
+test('product_agents-shaped result strips undefined inside the children array', () => {
+  // A child with no product binding (a plain subagent) leaves product/mode/label
+  // undefined — the same lossless-JSON failure as the progress/wait tools.
+  const raw = {
+    availability: { 'claude-code': { registered: true, commandPresent: true, auth: undefined, note: undefined } },
+    children: [
+      { id: 'a', product: 'claude-code', activity: 'active', mode: 'continuable', label: 'x', pinned: true, model: 'inherit' },
+      { id: 'b', product: undefined, activity: 'inactive', mode: undefined, label: undefined, pinned: false, model: 'inherit' },
+    ],
+  }
+  const clean = stripUndefined(raw)
+  assert.deepEqual(JSON.parse(JSON.stringify(clean)), clean)
+  assert.deepEqual(clean.availability['claude-code'], { registered: true, commandPresent: true })
+  assert.deepEqual(clean.children[1], { id: 'b', activity: 'inactive', pinned: false, model: 'inherit' })
+})
