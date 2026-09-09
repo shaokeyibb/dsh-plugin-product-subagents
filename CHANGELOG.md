@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [0.3.2] — 2026-08-24
+## [0.3.2] — 2026-09-09
 
 ### Fixed
 - `subagent_progress` and `product_wait` no longer fail with
@@ -15,6 +15,13 @@ All notable changes to this project are documented in this file.
   `undefined` value threw on every poll, breaking watchable delegation. Results
   are now passed through a shared `stripUndefined` helper (`lib/lossless.js`)
   that recursively drops `undefined` keys/elements before returning.
+- `product_agents` failed the same way: a listed child with no product binding
+  (a plain subagent, or one whose binding was idle-disposed) left `product`,
+  `mode` and `label` `undefined` in the children array, and an undetected
+  provider left `auth`/`note` `undefined` in the availability view. Its result
+  now goes through the same `stripUndefined` helper.
+
+Thanks to @kaiomp for the report and the fix (#4, #5).
 
 ## [0.3.1] — 2026-08-17
 
