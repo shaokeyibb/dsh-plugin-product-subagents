@@ -51,6 +51,26 @@ permission flags are translated per product inside the bridge.
 **Adding a product** = add a bridge + register it in `lib/providers.js`
 (built-in) or declare it via `config.providers` (any ACP CLI, no code).
 
+### Provider ids are namespaced
+
+A provider key (`claude-code`, `codex`, `acp`, or any `config.providers` key)
+is the plugin's own vocabulary: roles pin it, `product_delegate` takes it, and
+the durable binding/registry records it, so a recovered child always finds the
+bridge it started on.
+
+It is NOT what gets registered on `ctx.subagents`. Those keys are also the ids
+the official `@deepseek-ai/dsh-subagent-claude-code` / `-codex` / `-acp`
+plugins register under, and `registerProvider` rejects a duplicate name —
+a rejection that fails the whole loader entry and takes the profile's plugin
+tree down at boot. So every registration goes out namespaced
+(`product-subagents:claude-code`, see `runtimeProviderName` in
+`lib/providers.js`), which is additive: it never shadows or impersonates an
+official id, and both plugins can be loaded in one profile.
+
+`config.providerNamespace` overrides the namespace; `''` registers the bare
+keys, which is only safe on a profile with no official product subagent
+plugins.
+
 ## Session continuity
 
 A child's remote session id is captured at the earliest possible moment and

@@ -32,7 +32,9 @@ permission ceiling, and cross-platform process launching.
 
 ## Requirements
 
-- A DeepSeek Harness deployment (web profile).
+- A DeepSeek Harness deployment (web profile). Every installable
+  `@deepseek-ai/dsh` release from `0.0.1-rc.5` through the current `0.1.5-rc.1`
+  is verified — see [Compatibility](#compatibility).
 - At least one product CLI on `PATH` and authenticated: `claude`, `codex`, or
   an ACP CLI (`opencode`, `agent`, `cbc`, …).
 - Node ≥ 18.
@@ -126,7 +128,25 @@ config:
   maxConcurrentChildren: 8    # cap on simultaneous continuable children
   rolesDir: <path>            # declarative role library (default: roles/)
   registryPath: <path>        # durable remote-session registry
+  providerNamespace: product-subagents
+                              # namespace for the ids registered on
+                              # ctx.subagents; '' registers the bare keys
 ```
+
+### Provider ids
+
+`claude-code`, `codex`, `acp` (and any `config.providers` key) stay the names
+you use in roles and in `product_delegate` — but they are also the ids the
+official `@deepseek-ai/dsh-subagent-claude-code` / `-codex` / `-acp` plugins
+register under, and the harness rejects a duplicate provider id hard enough to
+fail the whole profile's plugin tree at boot.
+
+So on `ctx.subagents` this plugin registers namespaced, plugin-owned ids —
+`product-subagents:claude-code` and friends — and both plugins can live in one
+profile. This only changes the harness-wide `subagent` tool's provider names;
+nothing in this plugin's own surface moved. Set `providerNamespace: ''` to
+register the bare keys again (safe only where no official product subagent
+plugin is loaded).
 
 ## Roles and permissions
 
@@ -179,6 +199,27 @@ npm run lint    # syntax-check every module
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the bridge contract, the
 permission model, and how to add products. CI runs the suite on macOS /
 Ubuntu / Windows × Node 18/20/22.
+
+## Compatibility
+
+`package.json` declares the supported DSH range under `dsh.compatibility`, plus
+`dshReleases` — a per-release `compatible` / `incompatible` / `unknown` verdict.
+Every `compatible` verdict is backed by an acceptance run in a **disposable
+profile**, not by the range alone:
+
+```bash
+node scripts/verify-dsh-profile.mjs --dsh 0.1.5-alpha.2
+```
+
+For one DSH release that creates a throwaway `$DSH_HOME`, installs the packed
+tarball with the real `dsh plugin add`, checks the composed profile tree, boots
+the profile and asserts from inside the running harness that all six tools are
+registered, the providers reached the real `SubagentRuntime`, and the tools
+execute and schema-validate — then uninstalls and checks the bundle layer is
+gone. It needs no API key, and it is not part of `npm test`.
+
+The recorded matrix and what a verdict does (and does not) prove are in
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Security
 

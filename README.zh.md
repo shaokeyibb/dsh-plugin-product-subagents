@@ -17,7 +17,8 @@
 
 ## 环境要求
 
-- DeepSeek Harness 部署(web profile)。
+- DeepSeek Harness 部署(web profile)。从 `0.0.1-rc.5` 到当前 `0.1.5-rc.1` 之间
+  每一个可安装的 `@deepseek-ai/dsh` 发行版都已验证 —— 见[兼容性](#兼容性)。
 - 至少一个产品 CLI 在 `PATH` 且已登录:`claude`、`codex`,或某个 ACP CLI(`opencode`、`agent`、`cbc`…)。
 - Node ≥ 18。
 
@@ -108,7 +109,22 @@ config:
   maxConcurrentChildren: 8    # 同时存在的连续式子代理上限
   rolesDir: <path>            # 声明式角色库目录(默认 roles/)
   registryPath: <path>        # 持久化远程会话注册表
+  providerNamespace: product-subagents
+                              # 注册到 ctx.subagents 的 id 命名空间;
+                              # 设为 '' 则注册裸 key
 ```
+
+### Provider id
+
+`claude-code`、`codex`、`acp`(以及任何 `config.providers` 的 key)仍然是你在角色和
+`product_delegate` 里使用的名字 —— 但它们同时也是官方
+`@deepseek-ai/dsh-subagent-claude-code` / `-codex` / `-acp` 插件注册用的 id,而 harness 对重复的
+provider id 会直接报错,并且这个报错会让整个 Profile 的插件树在启动时加载失败。
+
+因此本插件注册到 `ctx.subagents` 上的是带命名空间的、插件自有的 id ——
+`product-subagents:claude-code` 等 —— 两个插件可以共存于同一个 Profile。这只改变 harness 全局
+`subagent` 工具里看到的 provider 名字,本插件自己的接口没有任何变化。若要恢复裸 key,设置
+`providerNamespace: ''`(仅在没有加载官方产品子代理插件时才安全)。
 
 ## 角色与权限
 
@@ -152,6 +168,24 @@ npm run lint    # 语法检查所有模块
 ```
 
 桥契约、权限模型与新增产品的方式见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。CI 在 macOS / Ubuntu / Windows × Node 18/20/22 上跑测试套件。
+
+## 兼容性
+
+`package.json` 的 `dsh.compatibility` 声明支持的 DSH 范围,以及 `dshReleases` —— 逐个发行版的
+`compatible` / `incompatible` / `unknown` 结论。每个 `compatible` 都由一次**一次性 Profile**
+的验收运行支撑,而不是只靠版本范围:
+
+```bash
+node scripts/verify-dsh-profile.mjs --dsh 0.1.5-alpha.2
+```
+
+对一个 DSH 发行版,它会创建一次性的 `$DSH_HOME`,用真实的 `dsh plugin add` 安装打包好的
+tarball,检查组合出的 Profile 树,启动 Profile 并在运行中的 harness 内部断言:六个工具全部注册、
+Provider 确实进入了真实的 `SubagentRuntime`、工具能执行并通过输出 schema 校验;随后卸载并确认
+Bundle 层已经消失。整个过程不需要 API key,也不属于 `npm test`。
+
+记录下来的矩阵、以及一次验收能证明与不能证明什么,见
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)。
 
 ## 安全
 
