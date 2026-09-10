@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-product-subagents",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Role-based Codex / Claude Code / ACP subagent providers for the DeepSeek Harness: continuable children, durable session recovery, per-role product permissions, delegation with a permission ceiling, and a declarative role library.",
   "type": "module",
   "main": "lib/index.js",
@@ -51,7 +51,29 @@
     "compatibility": {
       "node": ">=18",
       "dsh": "^0.0.1-rc.5 || ^0.1.0-rc.2 || ^0.1.1-rc.1 || ^0.1.2-alpha.2 || ^0.1.3-alpha.2 || ^0.1.5-alpha.1",
-      "dshReleases": {}
+      "dshReleases": {
+        "0.0.1-rc.1": "unknown",
+        "0.0.1-rc.2": "unknown",
+        "0.0.1-rc.3": "unknown",
+        "0.0.1-rc.5": "compatible",
+        "0.1.0-rc.2": "compatible",
+        "0.1.0-rc.3": "compatible",
+        "0.1.0-rc.6": "compatible",
+        "0.1.0-rc.7": "compatible",
+        "0.1.0-rc.8": "compatible",
+        "0.1.1-rc.1": "compatible",
+        "0.1.1-rc.2": "compatible",
+        "0.1.2-alpha.2": "compatible",
+        "0.1.2-alpha.3": "compatible",
+        "0.1.2-alpha.4": "compatible",
+        "0.1.2-alpha.5": "compatible",
+        "0.1.2-rc.1": "compatible",
+        "0.1.3-alpha.1": "unknown",
+        "0.1.3-alpha.2": "compatible",
+        "0.1.5-alpha.1": "compatible",
+        "0.1.5-alpha.2": "compatible",
+        "0.1.5-rc.1": "compatible"
+      }
     }
   }
 }
