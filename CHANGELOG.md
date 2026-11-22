@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.1] — 2026-11-23
+
+### Fixed
+- Drop the legacy `sessions` service from the plugin's required injections,
+  shipping the fix for a DSH 0.2.1 desktop profile startup hang. Update the
+  peer ranges that caused DSH 0.2.2-rc.5 to reject installation of 0.4.0
+  (#6, #7).
+- Run the profile verifier's `npm pack` and `npx` commands through the
+  shared Windows launcher so it can execute npm's `.cmd` shims and pass paths
+  with spaces (#7).
+
+### Changed
+- Extend the DSH and peer dependency ranges to cover `0.2.2-rc.5` and
+  `0.2.3-alpha`, including the Cordis prerelease used by DSH 0.2.3.
+  See [the compatibility matrix](docs/COMPATIBILITY.md) for tested releases.
+
 ## [0.4.0] — 2026-09-10
 
 Compatibility release for the current DeepSeek Harness line, and the DSH STORE

@@ -19,11 +19,11 @@
  *
  * Exit code 0 only when every step of every requested release passed.
  */
-import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
+import { spawnSyncProduct } from '../lib/run.js'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const scripts = join(root, 'scripts')
@@ -46,9 +46,7 @@ function parseArgs(argv) {
 
 /** Run a command, capturing both streams; never throws on a nonzero exit. */
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, {
-    encoding: 'utf8', shell: process.platform === 'win32', ...options,
-  })
+  const result = spawnSyncProduct(command, args, { encoding: 'utf8', ...options })
   return {
     code: result.status ?? 1,
     stdout: result.stdout || '',
@@ -59,8 +57,9 @@ function run(command, args, options = {}) {
 
 /** `npm pack` this checkout into `dir`; returns the tarball path. */
 function packPlugin(dir) {
-  const out = execFileSync('npm', ['pack', '--pack-destination', dir], { cwd: root, encoding: 'utf8' })
-  const file = out.trim().split('\n').pop().trim()
+  const pack = run('npm', ['pack', '--pack-destination', dir], { cwd: root })
+  if (pack.code !== 0) throw new Error(`npm pack failed: ${pack.error || pack.stderr.trim()}`)
+  const file = pack.stdout.trim().split('\n').pop().trim()
   return join(dir, file)
 }
 

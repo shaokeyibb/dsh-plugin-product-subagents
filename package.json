@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-product-subagents",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Role-based Codex / Claude Code / ACP subagent providers for the DeepSeek Harness: continuable children, durable session recovery, per-role product permissions, delegation with a permission ceiling, and a declarative role library.",
   "type": "module",
   "main": "lib/index.js",
@@ -40,9 +40,9 @@
     "zod": "^3.23.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-subagent": "^0.0.1-rc.5 || ^0.1.0-rc.2 || ^0.1.1-rc.1 || ^0.1.2-alpha.2 || ^0.1.3-alpha.2 || ^0.1.5-alpha.1 || ^0.2.1-rc.2",
-    "@deepseek-ai/dsh-tools": "^0.0.1-rc.5 || ^0.1.0-rc.2 || ^0.1.1-rc.1 || ^0.1.2-alpha.2 || ^0.1.3-alpha.2 || ^0.1.5-alpha.1 || ^0.2.1-rc.2",
-    "@deepseek-ai/cordis": "^4.0.1-rc.4"
+    "@deepseek-ai/dsh-subagent": "^0.0.1-rc.5 || ^0.1.0-rc.2 || ^0.1.1-rc.1 || ^0.1.2-alpha.2 || ^0.1.3-alpha.2 || ^0.1.5-alpha.1 || ^0.2.1-rc.2 || ^0.2.2-rc.5 || ^0.2.3-alpha.2",
+    "@deepseek-ai/dsh-tools": "^0.0.1-rc.5 || ^0.1.0-rc.2 || ^0.1.1-rc.1 || ^0.1.2-alpha.2 || ^0.1.3-alpha.2 || ^0.1.5-alpha.1 || ^0.2.1-rc.2 || ^0.2.2-rc.5 || ^0.2.3-alpha.2",
+    "@deepseek-ai/cordis": "^4.0.1-rc.4 || ~4.2.0-alpha.1"
   },
   "dsh": {
     "bundle": {
@@ -50,7 +50,7 @@
     },
     "compatibility": {
       "node": ">=18",
-      "dsh": "^0.0.1-rc.5 || ^0.1.0-rc.2 || ^0.1.1-rc.1 || ^0.1.2-alpha.2 || ^0.1.3-alpha.2 || ^0.1.5-alpha.1 || ^0.2.1-rc.2",
+      "dsh": "^0.0.1-rc.5 || ^0.1.0-rc.2 || ^0.1.1-rc.1 || ^0.1.2-alpha.2 || ^0.1.3-alpha.2 || ^0.1.5-alpha.1 || ^0.2.1-rc.2 || ^0.2.2-rc.5 || ^0.2.3-alpha.2",
       "dshReleases": {
         "0.0.1-rc.1": "unknown",
         "0.0.1-rc.2": "unknown",
@@ -73,7 +73,10 @@
         "0.1.5-alpha.1": "compatible",
         "0.1.5-alpha.2": "compatible",
         "0.1.5-rc.1": "compatible",
-        "0.2.1-rc.2": "compatible"
+        "0.2.1-rc.2": "compatible",
+        "0.2.2-rc.5": "compatible",
+        "0.2.3-alpha.1": "unknown",
+        "0.2.3-alpha.2": "compatible"
       }
     }
   }
