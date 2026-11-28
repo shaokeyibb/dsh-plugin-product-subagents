@@ -2,195 +2,25 @@
 
 [English](README.md) | **简体中文**
 
-面向 DeepSeek Harness 的**基于角色的 Codex / Claude Code / ACP 子代理插件**。把外部 Agent CLI 变成持久、可续聊的子代理:声明式角色库、按角色的产品权限、带权限天花板的委派、跨平台进程启动。
-
-## 功能
-
-- **可续聊子代理** — 同步 one-shot 或异步连续式(用 `send_message` / `list_agents` / `interrupt_agent` 控制;用 `product_wait` 同步 attach)。
-- **会话连续性** — 子代理的远程产品会话在空闲释放与进程重启后仍可恢复(持久注册表 + 日志标记;claude/codex 按 id 恢复,ACP 重连)。
-- **声明式角色**(`roles/*.json`)— `general`(默认)、`code-review`、`explore`(禁派)、`debug`。委派默认开启,角色可显式禁止;未知角色回退 `general`。
-- **两层权限模型** — 中继模型永远是只读传话筒;`permissionMode`(`readonly` / `default` / `full`)作用于远程产品,映射到各产品自己的 CLI 标志。
-- **权限天花板** — 子代理不能派生出比自己权限更高的后代。
-- **任意 ACP Agent** — 通过 `config.providers` 加 Cursor(`agent acp`)、CodeBuddy(`cbc --acp`)、Gemini(`gemini --acp`)等,零代码。
-- **资源管理** — 空闲释放、可配超时、并发上限。
-- **跨平台** — Windows `.cmd` 垫片、Windows 安全路径转义;CI 覆盖 macOS / Ubuntu / Windows。
-
-## 环境要求
-
-- DeepSeek Harness 部署(web profile)。从 `0.0.1-rc.5` 到当前 `0.1.5-rc.1` 之间
-  每一个可安装的 `@deepseek-ai/dsh` 发行版都已验证 —— 见[兼容性](#兼容性)。
-- 至少一个产品 CLI 在 `PATH` 且已登录:`claude`、`codex`,或某个 ACP CLI(`opencode`、`agent`、`cbc`…)。
-- Node ≥ 18。
+让 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 把任务委派给 Codex、Claude Code 或兼容 ACP 的 CLI。任务可以单次运行，也可以交给后台子代理，之后继续对话。角色提供任务指令，并为 Codex 和 Claude Code 设置权限模式。
 
 ## 安装
 
-### 推荐方式 — `dsh plugin add`
+使用[兼容的 DSH 版本](docs/COMPATIBILITY.md)，确保至少一个受支持的 CLI 在 `PATH` 中并已完成所需的认证。
 
 ```bash
 dsh plugin --profile web add dsh-plugin-product-subagents
 ```
 
-这一条命令**同时**完成装包与接线:插件通过 `package.json` 里的 `dsh.bundle`
-声明自带 `cordis.patch.yml`,`dsh plugin add` 会自动将其注册为 profile 层
-(无需手动编辑 `cordis.patch.yml`)。装完后重启 harness 即可生效。
-
-如需自定义插件配置(例如加 ACP provider),在 profile 自己的
-`cordis.patch.yml`(`~/.dsh/profiles/web/cordis.patch.yml`)里按
-`product-subagents` id 覆盖:
-
-```yaml
-- id: product-subagents
-  config:
-    idleTimeoutMs: 600000
-    providers:
-      cursor:    { type: acp, command: agent, args: [acp] }
-      codebuddy: { type: acp, command: cbc, args: [--acp] }
-```
-
-> **注意:** config 覆盖会替换整行 `config` 对象,请把要保留的字段一并写上
-> (如上面的 `idleTimeoutMs`)。
-
-### 让 Agent 安装(一句话)
-
-把这句粘贴给你的 DeepSeek Harness Agent(或任何有 shell 权限的编码 Agent),
-它会自己完成所有步骤:
-
-> 请把 `dsh-plugin-product-subagents` 插件装进我的 DeepSeek Harness
-> web profile:执行 `dsh plugin --profile web add dsh-plugin-product-subagents`,
-> 然后提醒我重启 harness 让插件生效。
-
-### 手动安装(进阶)
-
-如果你希望自己管理 profile,请在 profile 目录内使用 pnpm(不要用 npm),
-以避免 peer 依赖被自动安装:
-
-```bash
-cd ~/.dsh/profiles/web
-pnpm add dsh-plugin-product-subagents
-```
-
-然后在 profile 的 `cordis.patch.yml` 加一行宿主层:
-
-```yaml
-- insert:
-    - id: product-subagents
-      name: 'dsh-plugin-product-subagents'
-      config:
-        idleTimeoutMs: 600000
-        providers:
-          cursor:    { type: acp, command: agent, args: [acp] }
-          codebuddy: { type: acp, command: cbc, args: [--acp] }
-```
+如果使用其他 Profile，把 `web` 换成相应名称。安装后重启 DSH。
 
 ## 快速开始
 
-会话中的模型有六个工具:
+在 DSH 会话中，可以让代理用 Codex 和 `code-review` 角色审查当前的代码改动。
 
-| 工具 | 用途 |
-|---|---|
-| `product_delegate` | 按角色委派任务(同步或连续式) |
-| `product_roles` | 列出角色库 |
-| `product_submit` | 子代理内部桥(仅连续式子代理) |
-| `subagent_progress` | 单个子代理的状态 + 内部 trace |
-| `product_wait` | 阻塞直到子代理结算,返回答案 |
-| `product_agents` | Provider 可用性 + 活跃子代理 |
+- 用 `product_agents` 查看可用的 CLI，用 `product_roles` 查看可用角色。
+- `product_delegate` 默认在后台运行并返回子代理 ID。用 `product_wait` 等待结果，或用 `send_message` 继续对话。设置 `background: false` 可同步获取本次结果。
 
-```
-product_delegate role=general task="重构 demo-project/calc.js 并运行测试"
-product_wait subagent_id=<childId>
-```
+## 文档
 
-## 配置
-
-```yaml
-config:
-  providers: { cursor: { type: acp, command: agent, args: [acp] } }
-  idleTimeoutMs: 600000       # 结算后的子代理闲置超过此时长则释放远程会话(0 禁用)
-  maxConcurrentChildren: 8    # 同时存在的连续式子代理上限
-  rolesDir: <path>            # 声明式角色库目录(默认 roles/)
-  registryPath: <path>        # 持久化远程会话注册表
-  providerNamespace: product-subagents
-                              # 注册到 ctx.subagents 的 id 命名空间;
-                              # 设为 '' 则注册裸 key
-```
-
-### Provider id
-
-`claude-code`、`codex`、`acp`(以及任何 `config.providers` 的 key)仍然是你在角色和
-`product_delegate` 里使用的名字 —— 但它们同时也是官方
-`@deepseek-ai/dsh-subagent-claude-code` / `-codex` / `-acp` 插件注册用的 id,而 harness 对重复的
-provider id 会直接报错,并且这个报错会让整个 Profile 的插件树在启动时加载失败。
-
-因此本插件注册到 `ctx.subagents` 上的是带命名空间的、插件自有的 id ——
-`product-subagents:claude-code` 等 —— 两个插件可以共存于同一个 Profile。这只改变 harness 全局
-`subagent` 工具里看到的 provider 名字,本插件自己的接口没有任何变化。若要恢复裸 key,设置
-`providerNamespace: ''`(仅在没有加载官方产品子代理插件时才安全)。
-
-## 角色与权限
-
-每个角色文件:
-
-```json
-{
-  "id": "code-review",
-  "description": "审查代码的缺陷、安全与可维护性(只读)。",
-  "provider": "claude-code",
-  "permissionMode": "readonly",
-  "allowDelegation": true,
-  "instructions": "你是代码审查员。只读:绝不修改文件。…"
-}
-```
-
-- `permissionMode` 映射到产品标志:`readonly`(claude `--permission-mode plan` / codex `--sandbox read-only`)、`full`(claude `--dangerously-skip-permissions` / codex `--dangerously-bypass-approvals-and-sandbox`)。
-- **中继模型任何角色都拿不到可写工具**。
-- **委派有天花板**:`readonly < default < full`;子代理不能派生出权限更高的后代。
-
-## 自定义 ACP Provider
-
-`config.providers` 接受任意讲 ACP 的 CLI —— 通用桥负责持久进程、`session/load` 恢复与死进程重连:
-
-```yaml
-providers:
-  cursor:    { type: acp, command: agent, args: [acp] }    # Cursor CLI
-  codebuddy: { type: acp, command: cbc, args: [--acp] }    # CodeBuddy
-  gemini:    { type: acp, command: gemini, args: [--acp] } # Gemini CLI
-  opencode:  { type: acp, command: opencode, args: [acp] } # opencode
-```
-
-只有命令在 `PATH` 上被检测到,Provider 才会出现在委派枚举里。内置三件套(`claude-code` / `codex` / `acp`)可用同名键覆盖。
-
-## 开发
-
-```bash
-npm install
-npm test        # node:test — 纯逻辑 + fake bridge,不需要 CLI 或密钥
-npm run lint    # 语法检查所有模块
-```
-
-桥契约、权限模型与新增产品的方式见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。CI 在 macOS / Ubuntu / Windows × Node 18/20/22 上跑测试套件。
-
-## 兼容性
-
-`package.json` 的 `dsh.compatibility` 声明支持的 DSH 范围,以及 `dshReleases` —— 逐个发行版的
-`compatible` / `incompatible` / `unknown` 结论。每个 `compatible` 都由一次**一次性 Profile**
-的验收运行支撑,而不是只靠版本范围:
-
-```bash
-node scripts/verify-dsh-profile.mjs --dsh 0.1.5-alpha.2
-```
-
-对一个 DSH 发行版,它会创建一次性的 `$DSH_HOME`,用真实的 `dsh plugin add` 安装打包好的
-tarball,检查组合出的 Profile 树,启动 Profile 并在运行中的 harness 内部断言:六个工具全部注册、
-Provider 确实进入了真实的 `SubagentRuntime`、工具能执行并通过输出 schema 校验;随后卸载并确认
-Bundle 层已经消失。整个过程不需要 API key,也不属于 `npm test`。
-
-记录下来的矩阵、以及一次验收能证明与不能证明什么,见
-[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)。
-
-## 安全
-
-这是**配置即信任边界**的工具:它会启动你配置的任何 CLI,`full` 会传递产品自己的"绕过所有权限检查"标志。见 [SECURITY.md](SECURITY.md)。
-
-## License
-
-MIT
+[角色、提供方和工具](docs/ARCHITECTURE.md) · [安全说明](SECURITY.md) · [参与贡献](CONTRIBUTING.md) · [更新日志](CHANGELOG.md) · [MIT 许可证](LICENSE)
