@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- Background `product_delegate` starts a durable child on DSH hosts with the
+  managed activation API. Child relay tools stay restricted on initial start
+  and cold resume, and the progress, wait, and listing tools use the current
+  child catalog API (#8).
+- `subagent_progress` reports an unrecognized child ID as `unknown`.
+
 ## [0.4.1] — 2026-11-23
 
 ### Fixed

@@ -38,7 +38,7 @@ steps and fails the release on the first one that does not hold:
 |---|---|
 | `install` | `dsh plugin --profile headless add <tarball>` succeeds **and** the profile manifest gained `dsh-plugin-product-subagents` in `dsh.profile.bundles` — the `dsh.bundle.patch` declaration is honoured by that release's CLI. |
 | `compose` | `dsh --profile headless --dump-config` composes a tree containing the plugin's row — the bundle patch layers correctly under that release's loader. |
-| `start` | The profile actually **boots** with `scripts/verify-plugin.mjs` overlaid via `--patch`. Inside the running harness it asserts all six tools are registered, the subagent providers reached the real `SubagentRuntime`, and `product_roles` / `product_agents` execute, validate against their declared output schema, render, and contain no `undefined` (strict lossless JSON). |
+| `start` | The profile boots with `scripts/verify-plugin.mjs` overlaid via `--patch`. It checks tool and provider registration and validates the output from `product_roles` and `product_agents`. On hosts exposing managed activations and with Codex detected, it also calls `product_delegate` in background mode, waits for a deterministic test model's answer, sends another message after settlement, and checks the relay's tool allowlist at startup and resume. |
 | `uninstall` | `dsh plugin … remove` succeeds and the bundle layer is gone from the manifest again. |
 
 `--with <pkg>[,<pkg>]` co-installs other bundles into the same profile. The

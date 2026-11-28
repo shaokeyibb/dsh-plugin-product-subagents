@@ -8,6 +8,7 @@
  * CLI-free. This file only ever runs inside a disposable profile.
  */
 import { validateJsonSchemaValue } from '@deepseek-ai/dsh-tools'
+import assert from 'node:assert/strict'
 
 export const name = 'product-subagents-verify'
 export const inject = ['tools', 'subagents']
@@ -32,6 +33,63 @@ function undefinedPaths(value, path = '$', out = []) {
     for (const [key, val] of Object.entries(value)) undefinedPaths(val, `${path}.${key}`, out)
   }
   return out
+}
+
+/** Exercise managed startup and settlement without calling a live model or product CLI. */
+async function verifyBackgroundDelegate(ctx) {
+  const { LlmAdapter } = await import('@deepseek-ai/dsh-llm')
+  let turns = 0
+  class VerifyAdapter extends LlmAdapter {
+    async *stream() {
+      const block = { type: 'text', text: ++turns === 1 ? 'PRODUCT_OK' : 'CONTINUED_OK' }
+      yield { type: 'block-start', index: 0, blockType: 'text' }
+      yield { type: 'text-delta', index: 0, text: block.text }
+      yield { type: 'block-end', index: 0, block }
+      yield { type: 'finish', reason: 'stop' }
+    }
+  }
+  ctx.get('llm').registerAdapter(['product-verifier'], new VerifyAdapter())
+  const signal = AbortSignal.timeout(10000)
+  const handle = await ctx.get('agents').create({
+    meta: { cwd: process.cwd() },
+    agentOptions: { provider: 'product-verifier', model: 'test-model' },
+    signal,
+  })
+  const scopes = new Map()
+  const off = ctx.on('agent/created', ({ agent }) => {
+    const visible = agent.ctx.tools.definitions(agent).map((tool) => tool.name)
+    scopes.set(agent.id, visible.sort())
+  })
+  const execute = (name, args) => ctx.tools.get(name).execute(args, { agent: handle.agent, signal })
+  try {
+    const result = await execute('product_delegate', { provider: 'codex', role: 'explore', task: 'verify', background: true })
+    assert.ok(typeof result.childId === 'string' && result.childId.length > 0)
+    assert.deepEqual(scopes.get(result.childId), ['product_submit'])
+    const { children } = await execute('product_agents', {})
+    assert.ok(children.some(({ id, mode }) => id === result.childId && mode === 'continuable'))
+    const done = await execute('product_wait', { subagent_id: result.childId, timeout_ms: 5000 })
+    assert.ok(['ready', 'completed'].includes(done.status), JSON.stringify(done))
+    assert.equal(done.answer, 'PRODUCT_OK')
+    const progress = await execute('subagent_progress', { subagent_id: result.childId })
+    assert.equal(progress.mode, 'continuable')
+    assert.equal((await execute('subagent_progress', { subagent_id: 'missing' })).status, 'unknown')
+    // Wait for disposal so the resumed relay gets its policy from the registry.
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const { children: settled } = await execute('product_agents', {})
+      if (settled.some(({ id, pinned }) => id === result.childId && !pinned)) break
+      if (attempt === 19) throw new Error('the idle product binding was not disposed')
+      await new Promise((resolve) => setTimeout(resolve, 25))
+    }
+    scopes.delete(result.childId)
+    await ctx.subagents.sendMessage(handle.agent, result.childId, [{ type: 'text', text: 'continue' }], { signal })
+    const resumed = await execute('product_wait', { subagent_id: result.childId, timeout_ms: 5000 })
+    assert.equal(resumed.answer, 'CONTINUED_OK', JSON.stringify(resumed))
+    assert.deepEqual(scopes.get(result.childId), ['product_submit'])
+    return { mode: 'continuable', allowed: scopes.get(result.childId), answer: done.answer, resumed: resumed.answer }
+  } finally {
+    off()
+    await handle.dispose()
+  }
 }
 
 export function apply(ctx) {
@@ -97,6 +155,14 @@ export function apply(ctx) {
         })
       } catch (error) {
         add(`${tool} execute`, false, String((error && error.message) || error))
+      }
+    }
+
+    if (typeof ctx.subagents.startActivation === 'function' && enumerated?.includes('codex')) {
+      try {
+        add('product_delegate background', true, await verifyBackgroundDelegate(ctx))
+      } catch (error) {
+        add('product_delegate background', false, String(error.stack || error))
       }
     }
 
