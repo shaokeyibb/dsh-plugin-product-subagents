@@ -99,14 +99,21 @@ function verifyRelease(version, options, tarball) {
     // ── start ─────────────────────────────────────────────────────────────
     mkdirSync(profileDir, { recursive: true })
     copyFileSync(join(scripts, 'verify-plugin.mjs'), join(profileDir, 'verify-plugin.mjs'))
+    // The checker drives its own Agent. Prevent the headless CLI runner from
+    // racing it with the positional task and requiring model credentials.
+    const disableRunner = options.profile === 'headless' && dump.stdout.includes('id: headless-runner')
+      ? '- id: headless-runner\n  disabled: true\n'
+      : ''
     writeFileSync(join(profileDir, 'verify.patch.yml'),
-      "- insert:\n    - id: product-subagents-verify\n      name: './verify-plugin.mjs'\n")
+      disableRunner
+      + `- id: product-subagents\n  config:\n    idleTimeoutMs: 1\n    registryPath: ${JSON.stringify(join(home, 'product-subagents-registry.json'))}\n`
+      + "- insert:\n    - id: product-subagents-verify\n      name: './verify-plugin.mjs'\n")
     // `headless` needs a job argument; every other profile is a server that
     // would reject an unknown positional. The verifier exits the process as
     // soon as its checks settle, so a server profile still terminates.
     const bootArgs = [...dsh, '--profile', options.profile, '--patch', join(profileDir, 'verify.patch.yml')]
     if (options.profile === 'headless') bootArgs.push('verify')
-    const boot = run('npx', bootArgs, { env })
+    const boot = run('npx', bootArgs, { env, timeout: 60000 })
     const marker = /__PRODUCT_SUBAGENTS_VERIFY__(.*?)__END__/s.exec(boot.stdout)
     let runtime
     try { runtime = marker ? JSON.parse(marker[1]) : undefined } catch { runtime = undefined }
