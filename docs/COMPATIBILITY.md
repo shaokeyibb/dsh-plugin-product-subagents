@@ -65,17 +65,17 @@ fake bridge.
 
 ## Recorded results
 
-The 0.4.1 acceptance runs used Linux x64, Node 24.22.3, pnpm 11.25.0, and
+The 0.4.1 and 0.4.2 acceptance runs used Linux x64, Node 24.22.3, pnpm 11.25.0, and
 `codex` on `PATH`. The original 0.4.0 runs used macOS 26.5.2 (arm64),
 Node 24.16.0, pnpm 11.17.0, and `claude`, `codex` and `opencode` on `PATH`.
 
 | `@deepseek-ai/dsh` | Verdict | Evidence |
 |---|---|---|
-| `0.2.3-alpha.2` | `compatible` | install · compose · start · uninstall in `headless` and `web` with plugin 0.4.1 |
+| `0.2.3-alpha.2` | `compatible` | install · compose · start · uninstall in `headless` and `web` with plugin 0.4.2, including background delegation and cold resume |
 | `0.2.3-alpha.1` | `unknown` | DSH fails before loading any profile or plugin: its Cordis loader does not export `EntryValidationError` |
-| `0.2.2-rc.5` | `compatible` | install · compose · start · uninstall in `headless` and `web` with plugin 0.4.1. Also passed on Windows 11 with Node 24.15.0 and pnpm 12.21.0 in [#7](https://github.com/shaokeyibb/dsh-plugin-product-subagents/issues/7). |
+| `0.2.2-rc.5` | `compatible` | install · compose · start · uninstall in `headless` and `web` with plugin 0.4.2, including background delegation and cold resume. The original boot check also passed on Windows 11 in [#7](https://github.com/shaokeyibb/dsh-plugin-product-subagents/issues/7). |
 | `0.2.1-rc.2` | compatible | install · compose · start · uninstall — verified on Windows 11 / Node 24.20 by a third-party user on the real desktop profile (boot, six tools registered, product_roles & product_agents executed live, claude-code provider detected) |
-| `0.1.5-rc.1` | `compatible` | install · compose · start · uninstall; rechecked with 0.4.1 in `headless`. Also verified alongside the official `@deepseek-ai/dsh-subagent-claude-code` + `-codex` plugins in one profile with 0.4.0. |
+| `0.1.5-rc.1` | `compatible` | install · compose · start · uninstall; rechecked with 0.4.2 in `headless`. Also verified alongside the official `@deepseek-ai/dsh-subagent-claude-code` + `-codex` plugins in one profile with 0.4.0. |
 | `0.1.5-alpha.2` | `compatible` | install · compose · start · uninstall — also verified in a `web` profile, and alongside the official claude-code + codex subagent plugins in one profile |
 | `0.1.5-alpha.1` | `compatible` | install · compose · start · uninstall |
 | `0.1.3-alpha.2` | `compatible` | install · compose · start · uninstall |
